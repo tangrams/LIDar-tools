@@ -2,7 +2,7 @@
 
 ## cropTile
 
-Python script to crop a Tile from LAS LIDar data and project to [WGS 84 / Pseudo-Mercator -- Spherical Mercator, Google Maps, OpenStreetMap, Bing, ArcGIS, ESRI](http://epsg.io/3857)
+Python script to crop a Tile from LAS LIDar data and project to [Spherical Mercator (epsg:3857)](http://epsg.io/3857)
 
 Use:
 
