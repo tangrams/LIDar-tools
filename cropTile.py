@@ -1,53 +1,30 @@
 from liblas import file
 from liblas import srs
 from liblas import header
-from pyproj import Proj
-from pyproj import transform
 from math import *
 import sys
 
-#	http://svn.openstreetmap.org/applications/routing/pyroute/tilenames.py
-#
-def numTiles(z):
-	return(pow(2,z))
-
-def latEdges(y,z):
-	n = numTiles(z)
-	unit = 1 / n
-	relY1 = y * unit
-	relY2 = relY1 + unit
-	lat1 = mercatorToLat(pi * (1 - 2 * relY1))
-	lat2 = mercatorToLat(pi * (1 - 2 * relY2))
-	return(lat1,lat2)
-
-def lonEdges(x,z):
-	n = numTiles(z)
-	unit = 360 / n
-	lon1 = -180 + x * unit
-	lon2 = lon1 + unit
-	return(lon1,lon2)
+def metersForTile(x,y,z):
+    half_circumference = 20037508.342789244
+    metersX = x * half_circumference * 2.0 / pow(2.0, z) - half_circumference
+    metersY = (y * half_circumference * 2.0 / pow(2.0, z)) * -1.0 + half_circumference
+    return metersX,metersY 
 	
 def tileEdges(x,y,z):
-	lat1,lat2 = latEdges(y,z)
-	lon1,lon2 = lonEdges(x,z)
-	return((lat2, lon1, lat1, lon2)) # S,W,N,E
+	x1, y1 = metersForTile(x,y,z)
+	x2, y2 = metersForTile(x+1,y+1,z) 
 
-def mercatorToLat(mercatorY):
-	return(degrees(atan(sinh(mercatorY))))
+	south, north = min(y1,y2), max(y1,y2)
+	west, east = min(x1,x2), max(x1,x2)
 
-def cropTile(inputFile,x, y, z):
+	return((south,west,north,east)) # S,W,N,E
+
+def cropTile(inputFile,x,y,z):
 
 	# Get the edges of a tile
-	bBox = tileEdges(x, y, z) 
-
-	# Project the coorners to Spherical Mercator
-	latLonProj = Proj(init='epsg:4326') # LAT/LON
-	sphericalMercatorProj = Proj(init='epsg:3857') # Spherical Mercator
-
-	south, north = transform(latLonProj,sphericalMercatorProj,bBox[0],bBox[2])
-	west, east = transform(latLonProj,sphericalMercatorProj,bBox[1],bBox[3])
-	print "S/N ", south, north
-	print "W/E ", west, east
+	south,west,north,east = tileEdges(x, y, z) 
+	# print 'S/N ', south , north
+	# print 'W/E', west, east
 
 	# Open the LAS file and reproject to Pseudo-Mercator
 	# WGS 84 / Pseudo-Mercator -- Spherical Mercator, Google Maps, OpenStreetMap, Bing, ArcGIS, ESRI
@@ -60,9 +37,12 @@ def cropTile(inputFile,x, y, z):
 
 	# filter the outside the bBox (projected)
 	for p in inf:
-		if east <= p.x <= west and south <= p.y <= north:
+		if west <= p.x <= east and south <= p.y <= north:
+			#	TODO: detect if Z is in feets (International/US) and scale it to meters
+			#
+			p.z = p.z * 0.3048006096012192
 			outf.write(p)
-			#print '%f,%f,%f' % (p.x, p.y, p.z)
+			print '%f,%f,%f' % (p.x, p.y, p.z)
 
 	outf.close();
 
