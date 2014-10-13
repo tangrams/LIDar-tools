@@ -10,14 +10,19 @@ Use:
 
 	python cropTile.py 98522082.las 19298 24633 16
 
-### Dependences
+
+## las2ply.py 
+
+Python script to export .las/.las into .ply files
+
+# Dependences
 
 * [libLAS](http://www.liblas.org/)
 * [Proj4](http://trac.osgeo.org/proj/)
 
-#### On MacOS
+# Install On MacOS
 
 ```
-brew install liblas 
-pip install liblas pyproj 
+brew install laszip liblas
+pip install liblas pyproj
 ```

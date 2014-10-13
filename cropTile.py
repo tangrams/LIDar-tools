@@ -1,6 +1,7 @@
 from liblas import file
 from liblas import srs
 from liblas import header
+from liblas import schema
 from math import *
 import sys
 
@@ -23,26 +24,40 @@ def cropTile(inputFile,x,y,z):
 
 	# Get the edges of a tile
 	south,west,north,east = tileEdges(x, y, z) 
-	# print 'S/N ', south , north
-	# print 'W/E', west, east
+	scaleZ = 1.0
 
 	# Open the LAS file and reproject to Pseudo-Mercator
 	# WGS 84 / Pseudo-Mercator -- Spherical Mercator, Google Maps, OpenStreetMap, Bing, ArcGIS, ESRI
 	targetProjection = srs.SRS()
 	targetProjection.set_userinput('epsg:3857') # Ending projection ( http://epsg.io/3857 )
 	inf = file.File(inputFile, header=None, mode='r', in_srs=None , out_srs=targetProjection)
+	inh = inf.header
+
+	# If the height is in US Feets scale them into meters
+	if (inh.srs.proj4.find('+units=us-ft')):
+		scaleZ = 0.3048006096012192
 
 	# Create the out put file. 
-	outf = file.File(str(int(x))+'-'+str(int(y))+'-'+str(int(z))+'.las', mode="w")
+	outh = header.Header()
+	outh.dataformat_id = 1
+	outh.scale = [0.01,0.01,0.01]
+	outh.offset = [0.0,0.0,-0.0]
+	outsrs = srs.SRS()
+	outsrs.set_userinput('epsg:3857')
+	outh.srs = outsrs
+	outh.schema = inh.schema
 
+	# Open file
+	outf = file.File(str(int(x))+'-'+str(int(y))+'-'+str(int(z))+'.las', mode='w', header=outh)
+	
 	# filter the outside the bBox (projected)
 	for p in inf:
 		if west <= p.x <= east and south <= p.y <= north:
 			#	TODO: detect if Z is in feets (International/US) and scale it to meters
 			#
-			p.z = p.z * 0.3048006096012192
+			p.z = p.z * scaleZ
 			outf.write(p)
-			print '%f,%f,%f' % (p.x, p.y, p.z)
+			print '%.2f,%.2f,%.2f' % (p.x, p.y, p.z)
 
 	outf.close();
 
