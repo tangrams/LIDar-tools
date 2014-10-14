@@ -8,11 +8,11 @@ This article is based on [‘Processing LiDAR to extract building heights’](ht
 
 - Install Postgres
 
-	brew install postgres
+```brew install postgres```
 
 - Install PostGIS
 
-	brew install postgis
+```brew install postgis```
 
 ## Steps
 
