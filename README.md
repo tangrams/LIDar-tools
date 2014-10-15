@@ -56,6 +56,7 @@ Follow [this tutorial](http://scigeo.org/articles/howto-install-latest-geospatia
 ```
 pip install liblas 
 pip install pyproj
+pip install PPyGIS
 ```
 
 # Tutorials 
