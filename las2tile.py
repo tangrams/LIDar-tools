@@ -53,8 +53,6 @@ def cropTile(inputFile,x,y,z):
 	# filter the outside the bBox (projected)
 	for p in inf:
 		if west <= p.x <= east and south <= p.y <= north:
-			#	TODO: detect if Z is in feets (International/US) and scale it to meters
-			#
 			p.z = p.z * scaleZ
 			outf.write(p)
 			print '%.2f,%.2f,%.2f' % (p.x, p.y, p.z)
@@ -62,7 +60,7 @@ def cropTile(inputFile,x,y,z):
 	outf.close();
 
 if __name__ == '__main__':
-	assert len(sys.argv) == 5, 'Usage: python cropTile.py inFile x y z'
+	assert len(sys.argv) == 5, 'Usage: python las2tile.py inFile x y z'
 	inputFile = sys.argv[1]
 	x, y, z = map(float, sys.argv[2:])
 	cropTile(inputFile,x, y, z)

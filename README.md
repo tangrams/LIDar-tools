@@ -25,12 +25,23 @@ Example:
 
 ## Installation
 
-### On Mac OSX
+#### On Mac OSX
 
 ```
 brew install laszip
 brew install liblas
-pip install liblas pyproj
+```
+
+#### On Linux 
+
+Follow [this tutorial](http://scigeo.org/articles/howto-install-latest-geospatial-software-on-linux.html#liblas)
+
+### Then
+
+```
+pip install liblas 
+pip install pyproj
+pip install requests
 ```
 
 ## Others useful libraries
