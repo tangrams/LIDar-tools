@@ -1,22 +1,37 @@
 # LIDar Tools
 
-### cropTile
+### las2SM.py
+Project LAS/LAZ LIDar data to [Spherical Mercator (epsg:3857)](http://epsg.io/3857)
 
-Python script to crop a Tile from LAS LIDar data and project to [Spherical Mercator (epsg:3857)](http://epsg.io/3857)
+Example:
+	
+	python las2SM.py data.las SMdata.las
+
+### las2tile.py
+
+Crop a tile from LAS LIDar data and project to [Spherical Mercator (epsg:3857)](http://epsg.io/3857)
 
 Example:
 
-	python cropTile.py data.las 19298 24633 16
+	python las2tile.py data.las 19298 24633 16
 
 
 ### las2ply.py 
 
-Python script to export .las/.las into .ply files
+Export .las/.las into .ply files
 
 Example:
 
 	python las2ply.py 19298-24633-16.las 19298-24633-16.ply
 
+
+### getPointsForID.py
+
+Get the 3D points inside a OSM polygon through PostGIS using the [OSM ID](http://www.openstreetmap.org/way/264768896). For these you previously need to [load your LIDar and OSM data to your PostGIS server](recipes/postgisOSM-LAS.md)
+
+Example:
+
+	python getPointsForID.py 264768896 outfile.xyz 
 
 ## Dependences
 
@@ -34,25 +49,16 @@ brew install liblas
 
 #### On Linux 
 
-Follow [this tutorial](http://scigeo.org/articles/howto-install-latest-geospatial-software-on-linux.html#liblas)
+Follow [this tutorial](http://scigeo.org/articles/howto-install-latest-geospatial-software-on-linux.html#liblas).
 
 ### Then
 
 ```
 pip install liblas 
 pip install pyproj
-pip install requests
 ```
-
-## Others useful libraries
-
-- [PCL](http://www.pointclouds.org/news/2013/02/07/python-bindings-for-the-point-cloud-library/)
-
-- [CGAL](http://cgal-python.gforge.inria.fr/)
-
-- [PDAL](http://www.pdal.io/)
 
 # Tutorials 
 
 - [Install Python on MacOs](https://gist.github.com/patriciogonzalezvivo/77da993b14a48753efda)
-- [Extract serving one LIDar tile on PostGIS](recipes/postgisTile.md)
+- [Load LIDar and OSM data to your PostGIS server](recipes/postgisOSM-LAS.md)

@@ -1,6 +1,6 @@
 # Extract serving one LIDar tile on PostGIS 
 
-This article is based on [‘Processing LiDAR to extract building heights’](https://gist.github.com/YKCzoli/3605e014b8ed09a571e5).
+This article is based on [Yuriy’s Czoli](https://github.com/YKCzoli) article [‘Processing LiDAR to extract building heights’](https://gist.github.com/YKCzoli/3605e014b8ed09a571e5).
 
 ## Installation
 
