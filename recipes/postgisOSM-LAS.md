@@ -6,9 +6,13 @@ This article is partialy based on [Yuriy’s Czoli](https://github.com/YKCzoli) 
 
 ### On Mac OSX
 
-- Install Postgres and PostGIS
+- Install Postgres, PostGIS and [OSM-PostGIS](http://wiki.openstreetmap.org/wiki/Osm2pgsql#Binary_Installer) tools 
 
-```brew install postgres postgis```
+```
+brew install postgres postgis 
+brew install protobuf-c
+brew install osm2pgsql --with-protobuf-c
+```
 
 ## Steps
 
