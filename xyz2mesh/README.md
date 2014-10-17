@@ -17,13 +17,15 @@
 
 3. Compile
 
-	cd CGAL-4.5 # go to CGAL directory
-	cmake . # configure CGAL
-	make # build the CGAL libraries
+```
+cd CGAL-4.5 # go to CGAL directory
+cmake . # configure CGAL
+make # build the CGAL libraries
+```
 
 4. Install
 
-	make install
+```make install```
 
 #  Compile xyz2mesh
 
