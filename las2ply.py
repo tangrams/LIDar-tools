@@ -1,3 +1,5 @@
+#!/usr/local/bin/python
+
 from liblas import file
 from liblas import srs
 import sys

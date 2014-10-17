@@ -1,3 +1,4 @@
+#!/usr/local/bin/python
 import psycopg2
 import sys
 

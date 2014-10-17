@@ -29,7 +29,9 @@ make # build the CGAL libraries
 
 #  Compile xyz2mesh
 
+```
 cd LIDar-tools/xyz2mesh/
 cgal_create_CMakeLists -s xyz2mesh 
 cmake -DCGAL_DIR=/usr/local/include/CGAL . # Double check this!!
 make
+```

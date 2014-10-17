@@ -1,13 +1,13 @@
 # LIDar Tools
 
-### las2SM.py
+### las2SM
 Project LAS/LAZ LIDar data to [Spherical Mercator (epsg:3857)](http://epsg.io/3857)
 
 Example:
 	
 	python las2SM.py data.las SMdata.las
 
-### las2tile.py
+### las2tile
 
 Crop a tile from LAS LIDar data and project to [Spherical Mercator (epsg:3857)](http://epsg.io/3857)
 
@@ -16,7 +16,7 @@ Example:
 	python las2tile.py data.las 19298 24633 16
 
 
-### las2ply.py 
+### las2ply
 
 Export .las/.las into .ply files
 
@@ -25,7 +25,7 @@ Example:
 	python las2ply.py 19298-24633-16.las 19298-24633-16.ply
 
 
-### getPointsForID.py
+### getPointsForID
 
 Get the 3D points inside a OSM polygon through PostGIS using the [OSM ID](http://www.openstreetmap.org/way/264768896). For these you previously need to [load your LIDar and OSM data to your PostGIS server](recipes/postgisOSM-LAS.md)
 
