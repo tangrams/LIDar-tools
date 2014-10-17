@@ -62,4 +62,4 @@ pip install PPyGIS
 # Tutorials 
 
 - [Install Python on MacOs](https://gist.github.com/patriciogonzalezvivo/77da993b14a48753efda)
-- [Load LIDar and OSM data to your PostGIS server](recipes/postgisOSM-LAS.md)
+- [Load LIDar and OSM data to your PostGIS server](https://gist.github.com/patriciogonzalezvivo/229c5cd4001c2ed45ec6)
