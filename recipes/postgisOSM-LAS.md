@@ -44,7 +44,7 @@ If you want o upload also a LAS file, first translate the LIDar data to [```epsg
 
 And port it to XYZ format
 
-	las2txt SMdata.las -i SMdata.las —parse xyz —delimiter “ “ -o SMdata.xyz
+	las2txt -i SMdata.las —parse xyz —delimiter “ “ -o SMdata.xyz
 	
 Enter to our database.
 
