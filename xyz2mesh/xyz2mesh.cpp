@@ -145,11 +145,37 @@ inline void convert(const PointVectorList& point_vectors, PointWNList& point_wit
     }
 }
 
+struct Vertex{
+    Vertex(float _x, float _y, float _z):x(_x),y(_y),z(_z){};
+    float x,y,z;
+};
+
 void savePly(const Polyhedron_3& _poly, std::string _path, bool _useBinary = false ) {
     
+    //  COPY DATA (vertex + index)
+    //
+    std::vector<Vertex> vertices;
+    std::map<Point_3, uint16_t> vertices_indices;
+    std::vector<uint16_t> indices;
+    int count = 0;
+    for (auto it=_poly.vertices_begin(); it!=_poly.vertices_end(); ++it) {
+        auto& p = it->point();
+        vertices.push_back(Vertex(p.x(), p.y(), p.z()));
+        vertices_indices[p] = count++;
+    }
+
+    for (auto it=_poly.facets_begin(); it!=_poly.facets_end(); ++it) {
+        indices.push_back(vertices_indices[it->halfedge()->vertex()->point()]);
+        indices.push_back(vertices_indices[it->halfedge()->next()->vertex()->point()]);
+        indices.push_back(vertices_indices[it->halfedge()->prev()->vertex()->point()]);
+    }
+
+    //  CREATE PLY  
+    //
     std::ios_base::openmode binary_mode = _useBinary ? std::ios::binary : (std::ios_base::openmode)0;
     std::fstream os(_path.c_str(), std::ios::out | binary_mode);
     
+    //  Header
     os << "ply" << std::endl;
     if(_useBinary) {
         os << "format binary_little_endian 1.0" << std::endl;
@@ -157,46 +183,60 @@ void savePly(const Polyhedron_3& _poly, std::string _path, bool _useBinary = fal
         os << "format ascii 1.0" << std::endl;
     }
     
-    std::map<Point_3, int> point_indices;
-    int count = 0;
-    
-    if(_poly.size_of_vertices()>0){
-        os << "element vertex " << _poly.size_of_vertices() << std::endl;
+    if(vertices.size()>0){
+        os << "element vertex " << vertices.size() << std::endl;
         os << "property float x" << std::endl;
         os << "property float y" << std::endl;
         os << "property float z" << std::endl;
     }
     
     unsigned char faceSize = 3;
-    if(_poly.size_of_facets()){
-        os << "element face " << _poly.size_of_facets() / faceSize << std::endl;
+    if(indices.size()>0){
+        os << "element face " << indices.size() / faceSize << std::endl;
+        os << "property list uchar int vertex_indices" << std::endl;
+    } else {
+        os << "element face " << vertices.size() / faceSize << std::endl;
         os << "property list uchar int vertex_indices" << std::endl;
     }
-    
+
     os << "end_header" << std::endl;
     
-    for (auto it=_poly.vertices_begin(); it!=_poly.vertices_end(); ++it) {
-        auto &p = it->point();
-        
+    // Vertices
+    for(int i = 0; i < vertices.size(); i++){
         if(_useBinary) {
-            // os.write((char*) &m_vertices[i], sizeof(glm::vec3));
-            std::cout << "binary format need to be implemented" << std::endl;
+            os.write((char*) &vertices[i].x, sizeof(Vertex));
         } else {
-            os << p.x() << " " << p.y() << " " << p.z() << std::endl;
+            os << vertices[i].x << " " << vertices[i].y << " " << vertices[i].z;
         }
-        
-        point_indices[p] = count++;
+        if(!_useBinary) {
+            os << std::endl;
+        }
     }
     
-    for (auto it=_poly.facets_begin(); it!=_poly.facets_end(); ++it) {
-        if(_useBinary) {
-            // os.write((char*) &faceSize, sizeof(unsigned char));
-            // for(int j = 0; j < faceSize; j++) {
-            // 	os.write((char*) &indices[j], sizeof(int));
-            // }
-            std::cout << "binary format need to be implemented" << std::endl;
-        } else {
-            os << (int) faceSize << " " << point_indices[it->halfedge()->vertex()->point()] << " " << point_indices[it->halfedge()->next()->vertex()->point()] << " " << point_indices[it->halfedge()->prev()->vertex()->point()] << std::endl;
+    // Indices
+    if(indices.size()>0) {
+        for(int i = 0; i < indices.size(); i += faceSize) {
+            if(_useBinary) {
+                os.write((char*) &faceSize, sizeof(unsigned char));
+                for(int j = 0; j < faceSize; j++) {
+                    int curIndex = indices[i + j];
+                    os.write((char*) &curIndex, sizeof(uint16_t));
+                }
+            } else {
+                os << (int) faceSize << " " << indices[i] << " " << indices[i+1] << " " << indices[i+2] << std::endl;
+            }
+        }
+    } else {
+        for(int i = 0; i < vertices.size(); i += faceSize) {
+            int indices[] = {i, i + 1, i + 2};
+            if(_useBinary) {
+                os.write((char*) &faceSize, sizeof(unsigned char));
+                for(int j = 0; j < faceSize; j++) {
+                    os.write((char*) &indices[j], sizeof(uint16_t));
+                }
+            } else {
+                os << (int) faceSize << " " << indices[0] << " " << indices[1] << " " << indices[2] << std::endl;
+            }
         }
     }
     
