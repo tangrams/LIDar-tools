@@ -1,5 +1,3 @@
-#!/usr/local/bin/python
-
 from liblas import file
 from liblas import srs
 from liblas import header

@@ -182,7 +182,7 @@ void savePly(const Polyhedron_3& _poly, std::string _path, bool _useBinary = fal
             // os.write((char*) &m_vertices[i], sizeof(glm::vec3));
             std::cout << "binary format need to be implemented" << std::endl;
         } else {
-            os << p.x() << " " << p.y() << " " << p.z();
+            os << p.x() << " " << p.y() << " " << p.z() << std::endl;
         }
         
         point_indices[p] = count++;
