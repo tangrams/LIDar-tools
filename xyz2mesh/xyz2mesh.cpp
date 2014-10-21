@@ -2,9 +2,7 @@
 
 #define CGAL_EIGEN3_ENABLED
 
-#include <CGAL/AABB_tree.h> // must be included before kernel
-#include <CGAL/AABB_traits.h>
-#include <CGAL/AABB_face_graph_triangle_primitive.h>
+#include <CGAL/Simple_cartesian.h>
 #include <CGAL/Timer.h>
 #include <CGAL/boost/graph/graph_traits_Polyhedron_3.h>
 
@@ -20,8 +18,6 @@
 
 #include <CGAL/IO/output_surface_facets_to_polyhedron.h>
 #include <CGAL/IO/read_xyz_points.h>
-#include <CGAL/IO/read_off_points.h>
-#include <CGAL/IO/write_xyz_points.h>
 
 #include <CGAL/Poisson_reconstruction_function.h>
 #include <CGAL/Point_with_normal_3.h>
@@ -47,21 +43,23 @@
 // Types
 // ----------------------------------------------------------------------------
 // kernel
+// typedef CGAL::Simple_cartesian<double> Kernel;
 typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
 
 // Simple geometric types
 typedef Kernel::FT FT;
-typedef Kernel::Point_3 Point_3;
-typedef Kernel::Vector_3 Vector_3;
+typedef Kernel::Point_3 Point;
+typedef Kernel::Vector_3 Vector;
 typedef CGAL::Point_with_normal_3<Kernel> Point_with_normal;
 typedef Kernel::Sphere_3 Sphere;
-typedef std::vector<Point_3> PointList;    
-typedef std::pair<Point_3, Vector_3> PointVectorPair;
+
+typedef std::vector<Point> PointList;    
+typedef std::pair<Point, Vector> PointVectorPair;
 typedef std::vector<PointVectorPair> PointVectorList;
 typedef std::vector<Point_with_normal> PointWNList;
 
 // polyhedron
-typedef CGAL::Polyhedron_3<Kernel> Polyhedron_3;
+typedef CGAL::Polyhedron_3<Kernel> Polyhedron;
 
 // Poisson implicit function
 typedef CGAL::Poisson_reconstruction_function<Kernel> Poisson_reconstruction_function;
@@ -69,12 +67,7 @@ typedef CGAL::Poisson_reconstruction_function<Kernel> Poisson_reconstruction_fun
 // Surface mesher
 typedef CGAL::Surface_mesh_default_triangulation_3 STr;
 typedef CGAL::Surface_mesh_complex_2_in_triangulation_3<STr> C2t3;
-typedef CGAL::Implicit_surface_3<Kernel, Poisson_reconstruction_function> Surface_3;
-
-// AABB tree
-typedef CGAL::AABB_face_graph_triangle_primitive<Polyhedron_3> Primitive;
-typedef CGAL::AABB_traits<Kernel, Primitive> AABB_traits;
-typedef CGAL::AABB_tree<AABB_traits> AABB_tree;
+typedef CGAL::Implicit_surface_3<Kernel, Poisson_reconstruction_function> Surface;
 
 struct Counter {
     int i, N;
@@ -86,7 +79,6 @@ struct Counter {
             std::cerr << "Counter reached " << N << std::endl;
         }
     }
-    
 };
 
 struct InsertVisitor {
@@ -101,7 +93,7 @@ void simplifyCloud(PointList& points, float cell_size){
                  points.end());
 
     // Optional: after erase(), use Scott Meyer's "swap trick" to trim excess capacity
-    std::vector<Point_3>(points).swap(points);
+    std::vector<Point>(points).swap(points);
 }
 
 void estimateNormals(const PointList& points, PointVectorList& point_vectors, int nb_neighbors){
@@ -146,16 +138,16 @@ inline void convert(const PointVectorList& point_vectors, PointWNList& point_wit
 }
 
 struct Vertex{
-    Vertex(float _x, float _y, float _z):x(_x),y(_y),z(_z){};
-    float x,y,z;
+    Vertex(long double _x, long double _y, long double _z):x(_x),y(_y),z(_z){};
+    long double x,y,z;
 };
 
-void savePly(const Polyhedron_3& _poly, std::string _path, bool _useBinary = false ) {
+void savePly(const Polyhedron& _poly, std::string _path, bool _useBinary = false ) {
     
     //  COPY DATA (vertex + index)
     //
     std::vector<Vertex> vertices;
-    std::map<Point_3, uint16_t> vertices_indices;
+    std::map<Point, uint16_t> vertices_indices;
     std::vector<uint16_t> indices;
     int count = 0;
     for (auto it=_poly.vertices_begin(); it!=_poly.vertices_end(); ++it) {
@@ -350,7 +342,7 @@ int main(int argc, char * argv[]){
     // Reads the point set file in points[].
     // Note: read_xyz_points_and_normals() requires an iterator over points
     // + property maps to access each point's position and normal.
-    // The position property map can be omitted here as we use iterators over Point_3 elements.
+    // The position property map can be omitted here as we use iterators over Point elements.
     
     CGAL::Timer reconstruction_timer; reconstruction_timer.start();
     Counter counter(std::distance(pointsWN.begin(), pointsWN.end()));
@@ -399,7 +391,7 @@ int main(int argc, char * argv[]){
     FT average_spacing = CGAL::compute_average_spacing(pointsWN.begin(), pointsWN.end(), 6 /* knn = 1 ring */);
     
     // Gets one point inside the implicit surface
-    Point_3 inner_point = function.get_inner_point();
+    Point inner_point = function.get_inner_point();
     FT inner_point_value = function(inner_point);
     if(inner_point_value >= 0.0){
         std::cerr << "Error: unable to seed (" << inner_point_value << " at inner_point)" << std::endl;
@@ -414,7 +406,7 @@ int main(int argc, char * argv[]){
     // conservative bounding sphere centered at inner point.
     FT sm_sphere_radius = 5.0 * radius;
     FT sm_dichotomy_error = sm_distance*average_spacing/1000.0; // Dichotomy error must be << sm_distance
-    Surface_3 surface(function,
+    Surface surface(function,
                       Sphere(inner_point,sm_sphere_radius*sm_sphere_radius),
                       sm_dichotomy_error/sm_sphere_radius);
     
@@ -449,7 +441,7 @@ int main(int argc, char * argv[]){
         return EXIT_FAILURE;
     
     // Converts to polyhedron
-    Polyhedron_3 output_mesh;
+    Polyhedron output_mesh;
     CGAL::output_surface_facets_to_polyhedron(c2t3, output_mesh);
     // Prints total reconstruction duration
     std::cerr << "Total reconstruction (implicit function + meshing): " << reconstruction_timer.time() << " seconds\n";

@@ -4,6 +4,7 @@ import sys
 DATABASE = 'test2'
 BUFFER_POLY = 5 # 0 == disable BUFFER (extend the radius of the search)
 FILLING_DIST = 0 # 0 == disable filling 
+CENTERED = True
 
 def extractPolygon(osm_id,outfile):
 	connection = psycopg2.connect(database = DATABASE)
@@ -15,19 +16,21 @@ def extractPolygon(osm_id,outfile):
 	ceiling = 0
 
 	# Center the feature
-	cursor.execute('SELECT ST_X(ST_Centroid(way)), ST_Y(ST_Centroid(way)) FROM planet_osm_polygon WHERE osm_id ='+osm_id)
-	centroid = cursor.fetchone()
+	if(CENTERED):
+		cursor.execute('SELECT ST_X(ST_Centroid(way)), ST_Y(ST_Centroid(way)) FROM planet_osm_polygon WHERE osm_id ='+osm_id)
+		centroid = cursor.fetchone()
 
+	# Get the OSM Polygon
 	cursor.execute('SELECT ST_AsText( way ) FROM planet_osm_polygon WHERE osm_id ='+osm_id)
 	polygonSTR = cursor.fetchone()[0][9:-2]
 	polygonPts = []
 	for point in polygonSTR.split(","):
 		polygonPts.append([float(coor) for coor in point.split(" ")])
-	# print polygonPts
 
 	cursor.execute('SELECT height FROM planet_osm_polygon WHERE osm_id ='+osm_id)
 	ceiling = cursor.fetchone()[0]
 
+	# Extend borders
 	if(BUFFER_POLY == 0):
 		cursor.execute('SELECT * FROM elevation INNER JOIN planet_osm_polygon AS polys ON ST_Intersects(elevation.the_geom, polys.way ) WHERE polys.osm_id = ' + osm_id)
 	else:
@@ -36,6 +39,7 @@ def extractPolygon(osm_id,outfile):
 	# Clean the out put file
 	open(outfile, 'w').close()
 	
+	# 	Write output file
 	outFile = open(outfile, 'w')
 	for row in cursor:
 		if (int(row[2]) < ground):
@@ -44,7 +48,6 @@ def extractPolygon(osm_id,outfile):
 		outFile.write(newLine+'\n')
 
 	if (FILLING_DIST > 0):
-		# print int(ground),int(ceiling)
 		for z in xrange(int(ground),int(ceiling)):
 			# print z
 			for p in polygonPts:
@@ -55,7 +58,13 @@ def extractPolygon(osm_id,outfile):
 	outFile.close()
 
 if __name__ == '__main__':
-	assert len(sys.argv) == 3, 'Usage: python getPointsForID.py osm_id_number outfile.xyz'
+	total = len(sys.argv)
+	assert total >= 3, 'Usage: python getPointsForID.py osm_id_number outfile.xyz [--center]'
+
+	for arg in xrange(total):
+		if( sys.argv[arg]=='--center'):
+			CENTERED = True
+
 	osm_id = sys.argv[1]
 	outfile = sys.argv[2]
 	extractPolygon(osm_id,outfile)

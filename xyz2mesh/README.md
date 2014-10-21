@@ -23,6 +23,12 @@ mv Eigen /usr/local/include/
 
 ## Install CGAL
 
+You can just do:
+
+```brew install cgal```
+
+or 
+
 1. Download [CGAL source code](http://www.cgal.org/)
 
 ```wget https://gforge.inria.fr/frs/download.php/file/34149/CGAL-4.5.tar.gz```
