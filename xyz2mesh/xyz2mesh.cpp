@@ -2,7 +2,8 @@
 
 #define CGAL_EIGEN3_ENABLED
 
-#include <CGAL/Simple_cartesian.h>
+#include <CGAL/Polyhedron_items_with_id_3.h>
+
 #include <CGAL/Timer.h>
 #include <CGAL/boost/graph/graph_traits_Polyhedron_3.h>
 
@@ -31,7 +32,7 @@
 #include <CGAL/mst_orient_normals.h>
 #include <CGAL/pca_estimate_normals.h>
 #include <CGAL/property_map.h>
-//#include <CGAL/remove_outliers.h>
+#include <CGAL/remove_outliers.h>
 
 #include <fstream>
 #include <iostream>
@@ -42,21 +43,21 @@
 // ----------------------------------------------------------------------------
 // Types
 // ----------------------------------------------------------------------------
-// kernel
-// typedef CGAL::Simple_cartesian<double> Kernel;
+
+// Kernel
 typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
 
 // Simple geometric types
-typedef Kernel::FT FT;
-typedef Kernel::Point_3 Point;
-typedef Kernel::Vector_3 Vector;
-typedef CGAL::Point_with_normal_3<Kernel> Point_with_normal;
-typedef Kernel::Sphere_3 Sphere;
+typedef Kernel::FT          FT;
+typedef Kernel::Point_3     Point;
+typedef Kernel::Vector_3    Vector;
+typedef CGAL::Point_with_normal_3<Kernel>   Point_with_normal;
+typedef Kernel::Sphere_3    Sphere;
 
-typedef std::vector<Point> PointList;    
-typedef std::pair<Point, Vector> PointVectorPair;
-typedef std::vector<PointVectorPair> PointVectorList;
-typedef std::vector<Point_with_normal> PointWNList;
+typedef std::vector<Point>  PointList;
+typedef std::pair<Point, Vector>    PointVectorPair;
+typedef std::vector<PointVectorPair>    PointVectorList;
+typedef std::vector<Point_with_normal>  PointWNList;
 
 // polyhedron
 typedef CGAL::Polyhedron_3<Kernel> Polyhedron;
@@ -92,6 +93,20 @@ void simplifyCloud(PointList& points, float cell_size){
     points.erase(CGAL::grid_simplify_point_set(points.begin(), points.end(), cell_size),
                  points.end());
 
+    // Optional: after erase(), use Scott Meyer's "swap trick" to trim excess capacity
+    std::vector<Point>(points).swap(points);
+}
+
+void removeOutliers(PointList& points, float removed_percentage, int nb_neighbors){
+    // Removes outliers using erase-remove idiom.
+    // The Identity_property_map property map can be omitted here as it is the default value.
+    // removed_percentage = 5.0; // percentage of points to remove
+    // nb_neighbors = 24; // considers 24 nearest neighbor points
+    points.erase(CGAL::remove_outliers(points.begin(), points.end(),
+                                       CGAL::Identity_property_map<Point>(),
+                                       nb_neighbors, removed_percentage),
+                 points.end());
+    
     // Optional: after erase(), use Scott Meyer's "swap trick" to trim excess capacity
     std::vector<Point>(points).swap(points);
 }
@@ -241,38 +256,58 @@ int main(int argc, char * argv[]){
     // decode parameters
     //***************************************
     
-    if (argc-1 < 2){
-        std::cerr << "Usage: " << argv[0] << " file_in.xyz file_out.off [options]\n";
-        std::cerr << "Options:\n";
-        std::cerr << "  -cell_size <float>     Size of the cell for the simplification (default=0.5)\n";
-        std::cerr << "  -nb_neighbors <float>  Nearby Neighbors for Normal Estimation (default=100)\n";
-        std::cerr << "  -sm_radius <float>     Radius upper bound (default=100 * average spacing)\n";
-        std::cerr << "  -sm_distance <float>   Distance upper bound (default=0.25 * average spacing)\n";
-        std::cerr << "  -solver <string>       Linear solver name (default=eigen)\n";
-        
-        return EXIT_FAILURE;
-    }
-    
     // Simplification options
     float cell_size = 0.5;
+    // Remove outliears
+    int rm_nb_neighbors = 24;
+    float rm_percentage = 0.0;
     // Normal estimation options
     int nb_neighbors = 100;
     // Poisson options
     FT sm_angle = 20.0; // Min triangle angle (degrees).
     FT sm_radius = 100; // Max triangle size w.r.t. point set average spacing.
     FT sm_distance = 0.25; // Approximation error w.r.t. point set average spacing.
-    std::string solver_name = "eigen"; // Sparse linear solver name.
+    std::string solver_name = "";//"eigen"; // Sparse linear solver name.
     double approximation_ratio = 0.02;
     double average_spacing_ratio = 5;
     
+    if (argc-1 < 2){
+        std::cerr << "Usage: " << argv[0] << " file_in.xyz file_out.off [options]\n";
+        std::cerr << "PointCloud simplification options:\n";
+        std::cerr << "  -cell_size <float>          Size of the cell for the simplification (default="<<cell_size<<")\n";
+        std::cerr << "\n";
+        std::cerr << "PointCloud outliers removal:\n";
+        std::cerr << "  -rm_nb_neighbors <float>    Nearby Neighbors for Outliers Removal (default="<<rm_nb_neighbors<<")\n";
+        std::cerr << "  -rm_percentage <float>      Porcentage of outliers to remove (default="<<rm_percentage<<")\n";
+        std::cerr << "\n";
+        std::cerr << "PointCloud normal estimation:\n";
+        std::cerr << "  -nb_neighbors <float>       Nearby Neighbors for Normal Estimation (default="<<nb_neighbors<<")\n";
+        std::cerr << "\n";
+        std::cerr << "Surface poisson reconstruction:\n";
+        std::cerr << "  -solver <string>            Linear solver name (default="<<solver_name<<")\n";
+        std::cerr << "  -sm_angle <float>           Min triangle angle (default="<< sm_angle <<" degrees)\n";
+        std::cerr << "  -sm_radius <float>          Max triangle size w.r.t. point set average spacing (default="<<sm_radius<<")\n";
+        std::cerr << "  -sm_distance <float>        Approximation error w.r.t. point set average spacing (default="<<sm_distance<<")\n";
+        std::cerr << "  -approx <float>             Aproximation ratio (default="<<approximation_ratio<<")\n";
+        std::cerr << "  -ratio <float>              Average spacing ratio (default="<<average_spacing_ratio<<")\n";
+        
+        return EXIT_FAILURE;
+    }
+
     // decode parameters
     std::string input_filename  = argv[1];
     std::string output_filename = argv[2];
     for (int i=3; i+1<argc ; ++i){
         if (std::string(argv[i])=="-cell_size")
             cell_size = atof(argv[++i]);
+        else if (std::string(argv[i])=="-rm_nb_neighbors")
+            rm_nb_neighbors = atof(argv[++i]);
+        else if (std::string(argv[i])=="-rm_nb_neighbors")
+            rm_percentage = atof(argv[++i]);
         else if (std::string(argv[i])=="-nb_neighbors")
             nb_neighbors = atof(argv[++i]);
+        else if (std::string(argv[i])=="-sm_radius")
+            sm_angle = atof(argv[++i]);
         else if (std::string(argv[i])=="-sm_radius")
             sm_radius = atof(argv[++i]);
         else if (std::string(argv[i])=="-sm_distance")
@@ -312,6 +347,17 @@ int main(int argc, char * argv[]){
     if(cell_size!=0.0){
         std::cout << "Simpliy...";
         simplifyCloud(points, cell_size);
+        std::cout << points.size() << " points," << task_timer.time() << " seconds" << std::endl;
+        task_timer.reset();
+    }
+    
+    //***************************************
+    // Remove outliers from Point Cloud
+    //***************************************
+    //
+    if(rm_percentage!=0.0 && rm_nb_neighbors != 0.0){
+        std::cout << "Removing outliers...";
+        removeOutliers(points, rm_percentage,rm_nb_neighbors);
         std::cout << points.size() << " points," << task_timer.time() << " seconds" << std::endl;
         task_timer.reset();
     }
