@@ -57,3 +57,27 @@ cgal_create_CMakeLists -s xyz2mesh
 cmake -DCGAL_DIR=/usr/local/include/CGAL . # Double check this!!
 make
 ```
+
+# Use
+
+```
+Usage: ./xyz2mesh file_in.xyz file_out.off [options]
+
+PointCloud **simplification** options:
+  -cell_size <float>          Size of the cell for the simplification (default=0.5)
+
+PointCloud **outliers removal**:
+  -rm_nb_neighbors <float>    Nearby Neighbors for Outliers Removal (default=24)
+  -rm_percentage <float>      Percentage of outliers to remove (default=0)
+
+PointCloud **normal estimation**:
+  -nb_neighbors <float>       Nearby Neighbors for Normal Estimation (default=100)
+
+Surface **poisson reconstruction**:
+  -solver <string>            Linear solver name (default=)
+  -sm_angle <float>           Min triangle angle (default=20 degrees)
+  -sm_radius <float>          Max triangle size w.r.t. point set average spacing (default=100)
+  -sm_distance <float>        Approximation error w.r.t. point set average spacing (default=0.25)
+  -approx <float>             Approximation ratio (default=0.02)
+  -ratio <float>              Average spacing ratio (default=5)
+```

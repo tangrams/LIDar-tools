@@ -29,6 +29,12 @@ Example:
 
 Get the 3D points inside a OSM polygon through PostGIS using the [OSM ID](http://www.openstreetmap.org/way/264768896). For these you previously need to [load your LIDar and OSM data to your PostGIS server](recipes/postgisOSM-LAS.md)
 
+Usage: 
+
+```
+	python getPointsForID.py <osm_id_number> <outfile>.xyz [-c / --center] [-g / --ground <meters>]
+```
+
 Example:
 
 	python getPointsForID.py 264768896 outfile.xyz 
@@ -57,6 +63,7 @@ Follow [this tutorial](http://scigeo.org/articles/howto-install-latest-geospatia
 pip install liblas 
 pip install pyproj
 pip install PPyGIS
+pip install psycopg2
 ```
 
 # Tutorials 
