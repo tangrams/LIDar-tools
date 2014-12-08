@@ -37,7 +37,7 @@ Usage:
 
 Example:
 
-	python getPointsForID.py 264768896 outfile.xyz 
+	python getPointsForID.py 264768896 outfile.xyz --center
 
 ## Dependences
 
